@@ -6,7 +6,7 @@ A Cloudflare Pages app with Functions backend and React frontend:
 - 💿 Vinyl center label search via Discogs
 - 🛡️ Both endpoints protected by Google login
 
----
+
 
 ## 🚀 Features
 - **Cover Search**: Enter album title or catalog number → fetch cover art.
@@ -15,7 +15,7 @@ A Cloudflare Pages app with Functions backend and React frontend:
 - **Frontend**: React app with two routes (`/` for covers, `/labels` for labels).
 - **Backend**: Cloudflare Pages Functions handle API calls and authentication.
 
----
+
 
 ## 🔑 Environment Variables
 
@@ -41,7 +41,7 @@ npm install react react-dom react-router-dom react-scripts
 npm start
 ```
 
----
+
 
 ## 🌐 Deployment to Cloudflare Pages
 1. Push project to GitHub.
@@ -64,7 +64,7 @@ npm start
 
 6. Deploy → Your app will be live at yourapp.pages.dev.
 
----
+
 
 ## 🔒 Authentication Flow
 1. User clicks Sign in with Google (/api/auth/login).
@@ -77,7 +77,7 @@ npm start
 
 5. React frontend wraps pages in <AuthGuard> to enforce login.
 
----
+
 
 ## ✅ Notes
 - Cover art comes from MusicBrainz + Cover Art Archive.
@@ -88,9 +88,9 @@ npm start
 
 - Both endpoints require valid Google session.
 
----
 
-📌 Next Steps
+
+## 📌 Next Steps
 - Add a Sign out endpoint if you want users to clear cookies.
 
 - Extend gallery views for multiple releases/labels.
