@@ -24,6 +24,7 @@ router.get('/cover', async (req, res) => {
 
     res.json(result);
   } catch (err) {
+    console.error('Cover API error:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -38,7 +39,6 @@ router.get('/labels', async (req, res) => {
     const data = await response.json();
     const resourceUrl = data.results[0].resource_url;
     const release = await (await fetch(resourceUrl)).json();
-    console.log(release);
     const releaseImages = release.images;
     let imgArray = []
     releaseImages.forEach((img) => {
