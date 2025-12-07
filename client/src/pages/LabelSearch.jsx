@@ -11,7 +11,7 @@ function LabelSearch() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const frameRef = useRef(null);
+  const frameRefs = useRef([]);
   const inputRef = useRef(null);
 
   const handleSearch = async (e) => {
@@ -23,12 +23,16 @@ function LabelSearch() {
     try {
       const data = await apiFetch(`/api/labels?query=${encodeURIComponent(query)}`);
       
-      // Proxy the image URL through our own backend
-      if (data.coverArtUrl) {
-        data.proxiedCoverArtUrl = `/api/proxy-image?url=${encodeURIComponent(data.coverArtUrl)}`;
+      // Proxy all image URLs through our own backend
+      if (data.images && Array.isArray(data.images)) {
+        data.proxiedImages = data.images.map(url => 
+          `/api/proxy-image?url=${encodeURIComponent(url)}`
+        );
       }
       
       setResult(data);
+      // Initialize refs array for the number of images
+      frameRefs.current = data.images ? new Array(data.images.length) : [];
     } catch(err) {
       console.log(err);
       setError(err.message);
@@ -40,13 +44,15 @@ function LabelSearch() {
   const clearAll = () => {
     setQuery("");
     setResult(null);
+    frameRefs.current = [];
     inputRef.current?.focus();
   };
 
-  const getFileName = (artist, title) => {
+  const getFileName = (artist, title, index) => {
     const safeArtist = (artist || "unknown").replace(/[^a-z0-9]/gi, "_");
     const safeTitle = (title || "unknown").replace(/[^a-z0-9]/gi, "_");
-    return `${safeArtist}-${safeTitle}.jpg`;
+    const suffix = index !== undefined ? `_${index + 1}` : "";
+    return `${safeArtist}-${safeTitle}${suffix}.jpg`;
   };
 
   const capture = (node, filename) => {
@@ -65,9 +71,9 @@ function LabelSearch() {
     });
   };
 
-  const handleDownloadFramed = (artist, title) => {
-    const filename = getFileName(artist, title);
-    const node = frameRef.current;
+  const handleDownloadFramed = (artist, title, index) => {
+    const filename = getFileName(artist, title, index);
+    const node = frameRefs.current[index];
     if (node) {
       const img = node.querySelector("img");
       if (img && !img.complete) {
@@ -95,15 +101,26 @@ function LabelSearch() {
       {loading && <CircularProgress sx={{ mt: 2 }} />}
       {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
 
-      {result && result.artist && (
-        <ImageCard
-          title={`${result.artist} — ${result.album}`}
-          imageUrl={result.proxiedCoverArtUrl || result.coverArtUrl}
-          frameRef={frameRef}
-          onDownload={() => handleDownloadFramed(result.artist, result.album)}
-          onClear={clearAll}
-          circular={true}
-        />
+      {result && result.artist && result.images && result.images.length > 0 && (
+        <Box sx={{ 
+          display: 'flex', 
+          flexWrap: 'wrap', 
+          gap: 3, 
+          justifyContent: 'center',
+          mt: 3 
+        }}>
+          {result.images.map((imageUrl, index) => (
+            <ImageCard
+              key={index}
+              title={`${result.artist} — ${result.album} ${result.images.length > 1 ? `(${index + 1}/${result.images.length})` : ''}`}
+              imageUrl={result.proxiedImages?.[index] || imageUrl}
+              frameRef={(el) => (frameRefs.current[index] = el)}
+              onDownload={() => handleDownloadFramed(result.artist, result.album, index)}
+              onClear={clearAll}
+              circular={true}
+            />
+          ))}
+        </Box>
       )}
     </Box>
   );

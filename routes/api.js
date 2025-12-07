@@ -29,23 +29,32 @@ router.get('/cover', async (req, res) => {
 });
 
 
-// GET /api/cover
+// GET /api/labels
 router.get('/labels', async (req, res) => {
   const { query } = req.query;
   try {
-    const apiUrl = `https://api.discogs.com/database/search?q=${encodeURIComponent(query)}&token=${process.env.DISCOGS_TOKEN}`;
+    const apiUrl = `https://api.discogs.com/database/search?q=${encodeURIComponent(query)}&type=release&format=vinyl&token=${process.env.DISCOGS_TOKEN}`;
     const response = await fetch(apiUrl);
     const data = await response.json();
-
+    const resourceUrl = data.results[0].resource_url;
+    const release = await (await fetch(resourceUrl)).json();
+    console.log(release);
+    const releaseImages = release.images;
+    let imgArray = []
+    releaseImages.forEach((img) => {
+      imgArray.push(img.uri);
+    });
+    
     const result = {
       artist: data.results[0]?.title?.split(" - ")[0] || "Unknown Artist",
       album: data.results[0]?.title?.split(" - ")[1] || "Unknown Album",
-      coverArtUrl: data.results[0]?.cover_image || null,
+      images: imgArray,
       success: true
     };
 
     res.json(result);
   } catch (err) {
+    console.error('Labels API error:', err);
     res.status(500).json({ error: err.message });
   }
 });
