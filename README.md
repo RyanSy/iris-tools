@@ -1,71 +1,143 @@
-# Album Cover & Vinyl Label Finder
+# IRIS Tools
 
-A Cloudflare Pages app with Functions backend and React frontend that searches for LP cover art and center labels via Discogs API.
-
-## 🚀 Features
-- **Cover Search**: Enter album title or catalog number → fetch cover art.
-- **Label Search**: Enter artist, title, or catalog number → fetch vinyl center labels.
-- **Frontend**: React app with two routes (`/` for covers, `/labels` for labels).
-- **Backend**: Cloudflare Pages Functions handle API calls.
+A web application for creating custom album art frames and vinyl label coasters. Search for any album and download high-quality images.
 
 
+## Features
 
-## 🔑 Environment Variables
+### Album Frames
+- Find album cover art using artist name, album title, or catalog number
+- Generate square frame designs perfect for 12" LP displays
+- Download high-resolution JPGs ready for upload to e-commerce sites
 
-Set these in **Cloudflare Pages → Project Settings → Environment Variables**:
+### Vinyl Label Coasters
+- Find vinyl center label images from Discogs database
+- Creates circular designs ideal for drink coasters
+- Supports multiple label variants per release
+- Batch download all labels from a single album
 
-- `DISCOGS_TOKEN` → Personal access token from Discogs API
-- `APP_URL` → Your Cloudflare Pages domain (e.g. `https://yourapp.pages.dev`)
+### Image Processing
+- Proxy images through backend to avoid CORS issues
+- Apply circular masks for label coasters
+- HTML5 canvas rendering for clean downloads
+- Customized filenames based on artist and album
 
-## 🛠️ Setup
 
-### Local Development
+## Quick Start
+
+### Prerequisites
+- Node.js 16+ 
+- Discogs API Personal Access Token ([Get one here](https://www.discogs.com/settings/developers))
+
+### Installation
+
 ```bash
-# Root dependencies (backend)
-npm install jose
+# Clone the repository
+git clone https://github.com/RyanSy/iris-tools.git
+cd iris-tools
 
-# Frontend dependencies
-cd frontend
-npm install react react-dom react-router-dom react-scripts
+# Install backend dependencies
+npm install
 
-# Run frontend locally
+# Install frontend dependencies
+cd client
+npm install
+```
+
+### Configuration
+
+Create a `.env` file in the root directory:
+
+```env
+DISCOGS_TOKEN=your_discogs_token_here
+NODE_ENV=development
+```
+
+### Running Locally
+
+```bash
+# Start the backend server (from root directory)
+npm start
+
+# In a new terminal, start the frontend (from client directory)
+cd client
 npm start
 ```
 
+The React app will open at `http://localhost:5173/`
 
 
-## 🌐 Deployment to Cloudflare Pages
+## Architecture
 
-1. Push project to GitHub.
+### Backend (Express.js)
+- `/api/cover` - Search for album cover art
+- `/api/labels` - Search for vinyl center labels (returns array)
+- `/api/proxy-image` - Proxy external images to avoid CORS
 
-2. In Cloudflare dashboard → Pages → Create new project → Connect repo.
+### Frontend (React + Material-UI)
+- **Search Component** - Unified search interface for both modes
+- **ImageCard Component** - Displays and downloads formatted images
+- **Tab Navigation** - Switch between Frames and Coasters views
 
-3. Build settings:
-
-    - Framework preset: React
-
-    - Build command: npm run build
-
-    - Output directory: frontend/build
-
-4. Functions:
-
-    - Cloudflare automatically deploys files under /functions.
-
-5. Add environment variables (see above).
-
-6. Deploy → Your app will be live at yourapp.pages.dev.
+### Tech Stack
+- **Frontend**: React, Material-UI, html2canvas
+- **Backend**: Express.js, Node.js
+- **APIs**: Discogs API
+- **Image Processing**: Sharp (backend), html2canvas (frontend)
 
 
+## Development
 
-## ✅ Notes
+### Project Structure
+```
+iris-tools/
+├── client/                     # React frontend
+│   ├── src/
+│   │   ├── pages/
+│   │   │   └── Search.jsx      # Main search component
+│   │   ├── components/
+│   │   │   ├── SearchBar.jsx
+│   │   │   └── ImageCard.jsx
+│   │   ├── utils/
+│   │   │   └── api.js
+│   │   └── App.jsx
+│   └── package.json
+├── routes/
+│   ├── cover.js                # Cover art API route
+│   └── labels.js               # Labels API route
+├── app.js                      # Express server
+└── package.json
+```
 
-- Cover art and label images come from Discogs. Frontend applies circular mask for transparent display.
+### API Response Formats
 
-- For true transparent PNGs server‑side, integrate Cloudflare Images variants or an external image pipeline.
+**Cover Search Response:**
+```json
+{
+  "artist": "Pink Floyd",
+  "album": "The Dark Side of the Moon",
+  "coverArtUrl": "https://..."
+}
+```
 
+**Labels Search Response:**
+```json
+{
+  "artist": "Pink Floyd",
+  "album": "The Dark Side of the Moon",
+  "images": [
+    "https://label-url-1.jpg",
+    "https://label-url-2.jpg"
+  ]
+}
+```
 
+## 📧 Contact
 
-## 📌 Next Steps
+Ryan - [@RyanSy](https://github.com/RyanSy)
 
-- Extend gallery views for multiple releases/labels.
+Project Link: [https://github.com/RyanSy/iris-tools](https://github.com/RyanSy/iris-tools)
+
+---
+
+**Note**: This tool is for personal use only. Please respect copyright and only use images you have the right to reproduce.
