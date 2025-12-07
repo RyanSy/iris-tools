@@ -2,6 +2,7 @@ export async function apiFetch(endpoint) {
   try {
     const res = await fetch(endpoint);
     const data = await res.json();
+    console.log(data);
 
     if (!data.success) {
       // Standardized error from backend

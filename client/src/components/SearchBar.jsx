@@ -1,7 +1,6 @@
 import React from "react";
 import { TextField, Button, IconButton, InputAdornment } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import ClearIcon from "@mui/icons-material/Clear";
 
 function SearchBar({ query, setQuery, onSearch, onClear, inputRef }) {
   return (
@@ -16,18 +15,6 @@ function SearchBar({ query, setQuery, onSearch, onClear, inputRef }) {
         onChange={(e) => setQuery(e.target.value)}
         sx={{ width: 320 }}
         required
-        slotProps={{
-          input: {
-            endAdornment:
-              query && (
-                <InputAdornment position="end">
-                  <IconButton onClick={onClear} edge="end">
-                    <ClearIcon />
-                  </IconButton>
-                </InputAdornment>
-              ),
-          },
-        }}
       />
       <Button type="submit" variant="contained" color="primary" aria-label="Search">
         <SearchIcon />

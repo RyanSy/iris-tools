@@ -22,6 +22,12 @@ function CoverSearch() {
 
     try {
       const data = await apiFetch(`/api/cover?query=${encodeURIComponent(query)}`);
+      
+      // Proxy the image URL through our own backend
+      if (data.coverArtUrl) {
+        data.proxiedCoverArtUrl = `/api/proxy-image?url=${encodeURIComponent(data.coverArtUrl)}`;
+      }
+      
       setResult(data);
     } catch(err) {
       console.log(err);
@@ -44,11 +50,18 @@ function CoverSearch() {
   };
 
   const capture = (node, filename) => {
-    html2canvas(node, { useCORS: true }).then((canvas) => {
+    html2canvas(node, { 
+      useCORS: true,
+      allowTaint: false,
+      logging: false
+    }).then((canvas) => {
       const link = document.createElement("a");
       link.href = canvas.toDataURL("image/jpeg");
       link.download = filename;
       link.click();
+    }).catch((err) => {
+      console.error("html2canvas error:", err);
+      setError("Failed to capture image. Please try again.");
     });
   };
 
@@ -66,7 +79,7 @@ function CoverSearch() {
   };
 
   return (
-    <Box textAlign="center" sx={{ mt: 9 }}>
+    <Box textAlign="center" sx={{ mt: 6 }}>
       <Typography variant="h5" gutterBottom sx={{ mb: 4 }}>
         Create LP Frame
       </Typography>
@@ -85,7 +98,7 @@ function CoverSearch() {
       {result && (
         <ImageCard
           title={`${result.artist} — ${result.album}`}
-          imageUrl={result.coverArtUrl}
+          imageUrl={result.proxiedCoverArtUrl || result.coverArtUrl}
           frameRef={frameRef}
           onDownload={() => handleDownloadFramed(result.artist, result.album)}
           onClear={clearAll}
