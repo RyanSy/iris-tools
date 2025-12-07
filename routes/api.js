@@ -1,5 +1,7 @@
 // routes/api.js
 import express from 'express';
+import pkg from 'express-openid-connect';
+const { auth, requiresAuth } = pkg;
 
 const router = express.Router();
 
@@ -92,7 +94,5 @@ router.get('/proxy-image', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch image' });
   }
 });
-
-
 
 export default router;
