@@ -26,7 +26,7 @@ function ImageCard({
         ref={frameRef}
         sx={{
           mt: 2,
-          border: "20px solid black",
+          border: circular? "0px" : "20px solid black",
           display: "inline-block",
           boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
           cursor: "pointer",
