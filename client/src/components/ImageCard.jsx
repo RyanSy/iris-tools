@@ -18,7 +18,7 @@ function ImageCard({
           <Typography variant="subtitle1">{subtitle}</Typography>
         )}
         <Typography variant="caption" sx={{ fontStyle: "italic", color: "gray" }}>
-          click to download
+          Click image to download.
         </Typography>
       </Box>
 

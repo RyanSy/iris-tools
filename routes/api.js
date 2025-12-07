@@ -28,6 +28,29 @@ router.get('/cover', async (req, res) => {
   }
 });
 
+
+// GET /api/cover
+router.get('/labels', async (req, res) => {
+  const { query } = req.query;
+  try {
+    const apiUrl = `https://api.discogs.com/database/search?q=${encodeURIComponent(query)}&token=${process.env.DISCOGS_TOKEN}`;
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+
+    const result = {
+      artist: data.results[0]?.title?.split(" - ")[0] || "Unknown Artist",
+      album: data.results[0]?.title?.split(" - ")[1] || "Unknown Album",
+      coverArtUrl: data.results[0]?.cover_image || null,
+      success: true
+    };
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 // GET /api/proxy-image - Proxy images to bypass CORS
 router.get('/proxy-image', async (req, res) => {
   const { url } = req.query;
@@ -60,4 +83,7 @@ router.get('/proxy-image', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch image' });
   }
 });
+
+
+
 export default router;

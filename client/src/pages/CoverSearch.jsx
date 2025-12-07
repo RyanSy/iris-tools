@@ -79,7 +79,7 @@ function CoverSearch() {
   };
 
   return (
-    <Box textAlign="center" sx={{ mt: 6 }}>
+    <Box textAlign="center" sx={{ mt: 5 }}>
       <Typography variant="h5" gutterBottom sx={{ mb: 4 }}>
         Create LP Frame
       </Typography>
