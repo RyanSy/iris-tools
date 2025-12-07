@@ -5,7 +5,7 @@ import html2canvas from "html2canvas";
 import SearchBar from "../components/SearchBar";
 import ImageCard from "../components/ImageCard";
 
-function LabelSearch() {
+function Search({ mode = "cover" }) {
   const [query, setQuery] = useState("");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -14,6 +14,10 @@ function LabelSearch() {
   const frameRefs = useRef([]);
   const inputRef = useRef(null);
 
+  const isLabelMode = mode === "label";
+  const endpoint = isLabelMode ? "/api/labels" : "/api/cover";
+  const title = isLabelMode ? "Create Label Coaster" : "Create LP Frame";
+
   const handleSearch = async (e) => {
     e.preventDefault();
     setError("");
@@ -21,18 +25,20 @@ function LabelSearch() {
     setLoading(true);
 
     try {
-      const data = await apiFetch(`/api/labels?query=${encodeURIComponent(query)}`);
+      const data = await apiFetch(`${endpoint}?query=${encodeURIComponent(query)}`);
       
-      // Proxy all image URLs through our own backend
-      if (data.images && Array.isArray(data.images)) {
+      // Handle both single image (cover) and multiple images (labels)
+      if (isLabelMode && data.images && Array.isArray(data.images)) {
         data.proxiedImages = data.images.map(url => 
           `/api/proxy-image?url=${encodeURIComponent(url)}`
         );
+        frameRefs.current = new Array(data.images.length);
+      } else if (data.coverArtUrl) {
+        data.proxiedCoverArtUrl = `/api/proxy-image?url=${encodeURIComponent(data.coverArtUrl)}`;
+        frameRefs.current = [null];
       }
       
       setResult(data);
-      // Initialize refs array for the number of images
-      frameRefs.current = data.images ? new Array(data.images.length) : [];
     } catch(err) {
       console.log(err);
       setError(err.message);
@@ -51,7 +57,7 @@ function LabelSearch() {
   const getFileName = (artist, title, index) => {
     const safeArtist = (artist || "unknown").replace(/[^a-z0-9]/gi, "_");
     const safeTitle = (title || "unknown").replace(/[^a-z0-9]/gi, "_");
-    const suffix = index !== undefined ? `_${index + 1}` : "";
+    const suffix = index !== undefined && index > 0 ? `_${index + 1}` : "";
     return `${safeArtist}-${safeTitle}${suffix}.jpg`;
   };
 
@@ -71,8 +77,8 @@ function LabelSearch() {
     });
   };
 
-  const handleDownloadFramed = (artist, title, index) => {
-    const filename = getFileName(artist, title, index);
+  const handleDownloadFramed = (artist, albumTitle, index = 0) => {
+    const filename = getFileName(artist, albumTitle, index);
     const node = frameRefs.current[index];
     if (node) {
       const img = node.querySelector("img");
@@ -84,10 +90,45 @@ function LabelSearch() {
     }
   };
 
+  // Render single image (cover mode)
+  const renderSingleImage = () => (
+    <ImageCard
+      title={`${result.artist} — ${result.album}`}
+      imageUrl={result.proxiedCoverArtUrl || result.coverArtUrl}
+      frameRef={(el) => (frameRefs.current[0] = el)}
+      onDownload={() => handleDownloadFramed(result.artist, result.album, 0)}
+      onClear={clearAll}
+      circular={false}
+    />
+  );
+
+  // Render multiple images (label mode)
+  const renderMultipleImages = () => (
+    <Box sx={{ 
+      display: 'flex', 
+      flexWrap: 'wrap', 
+      gap: 3, 
+      justifyContent: 'center',
+      mt: 3 
+    }}>
+      {result.images.map((imageUrl, index) => (
+        <ImageCard
+          key={index}
+          title={`${result.artist} — ${result.album} ${result.images.length > 1 ? `(${index + 1}/${result.images.length})` : ''}`}
+          imageUrl={result.proxiedImages?.[index] || imageUrl}
+          frameRef={(el) => (frameRefs.current[index] = el)}
+          onDownload={() => handleDownloadFramed(result.artist, result.album, index)}
+          onClear={clearAll}
+          circular={true}
+        />
+      ))}
+    </Box>
+  );
+
   return (
     <Box textAlign="center" sx={{ mt: 5 }}>
       <Typography variant="h5" gutterBottom sx={{ mb: 4 }}>
-        Create Label Coaster
+        {title}
       </Typography>
 
       <SearchBar
@@ -101,29 +142,18 @@ function LabelSearch() {
       {loading && <CircularProgress sx={{ mt: 2 }} />}
       {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
 
-      {result && result.artist && result.images && result.images.length > 0 && (
-        <Box sx={{ 
-          display: 'flex', 
-          flexWrap: 'wrap', 
-          gap: 3, 
-          justifyContent: 'center',
-          mt: 3 
-        }}>
-          {result.images.map((imageUrl, index) => (
-            <ImageCard
-              key={index}
-              title={`${result.artist} — ${result.album} ${result.images.length > 1 ? `(${index + 1}/${result.images.length})` : ''}`}
-              imageUrl={result.proxiedImages?.[index] || imageUrl}
-              frameRef={(el) => (frameRefs.current[index] = el)}
-              onDownload={() => handleDownloadFramed(result.artist, result.album, index)}
-              onClear={clearAll}
-              circular={true}
-            />
-          ))}
-        </Box>
+      {result && result.artist && (
+        <>
+          {isLabelMode && result.images && result.images.length > 0 
+            ? renderMultipleImages() 
+            : !isLabelMode && result.coverArtUrl 
+            ? renderSingleImage()
+            : null
+          }
+        </>
       )}
     </Box>
   );
 }
 
-export default LabelSearch;
+export default Search;

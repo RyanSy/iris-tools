@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Tabs, Tab, Box } from "@mui/material";
-import CoverSearch from "./pages/CoverSearch";
-import LabelSearch from "./pages/LabelSearch";
+import Search from "./pages/Search";
 
 function App() {
   const [tab, setTab] = useState(0);
@@ -26,8 +25,8 @@ function App() {
       </Tabs>
 
       {/* Tab content */}
-      {tab === 0 && <CoverSearch />}
-      {tab === 1 && <LabelSearch />}
+      {tab === 0 && <Search mode="cover" />}
+      {tab === 1 && <Search mode="label" />}
     </Box>
   );
 }
