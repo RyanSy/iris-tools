@@ -57,11 +57,11 @@ NODE_ENV=development
 
 ```bash
 # Start the backend server (from root directory)
-npm start
+npm run dev
 
 # In a new terminal, start the frontend (from client directory)
 cd client
-npm start
+npm run dev
 ```
 
 The React app will open at `http://localhost:5173/`
