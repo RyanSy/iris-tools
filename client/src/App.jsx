@@ -1,35 +1,35 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState } from "react";
+import { Tabs, Tab, Box } from "@mui/material";
+import CoverSearch from "./pages/CoverSearch";
+import LabelSearch from "./pages/LabelSearch";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [tab, setTab] = useState(0);
+
+  const handleChange = (event, newValue) => {
+    setTab(newValue);
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Box sx={{ width: "100%" }}>
+      {/* Tabs navigation */}
+      <Tabs
+        value={tab}
+        onChange={handleChange}
+        centered
+        textColor="primary"
+        indicatorColor="primary"
+        sx={{ mt: 3, mb: 3 }}
+      >
+        <Tab label="Frames" />
+        <Tab label="Coasters" />
+      </Tabs>
+
+      {/* Tab content */}
+      {tab === 0 && <CoverSearch />}
+      {tab === 1 && <LabelSearch />}
+    </Box>
+  );
 }
 
-export default App
+export default App;
