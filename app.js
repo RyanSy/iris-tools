@@ -21,14 +21,15 @@ app.use(cookieParser());
 if (process.env.NODE_ENV === 'development') {
   const vite = await createViteServer({
     server: { middlewareMode: true },
-    appType: 'custom', // disable Vite's own HTML serving
+    root: path.resolve(__dirname, 'frontend'), // point to frontend folder
+    appType: 'custom',
   });
   app.use(vite.middlewares);
 } else {
-  // In production, serve static files from the build output
-  app.use(express.static(path.resolve(__dirname, 'dist')));
+  // In production, serve built assets
+  app.use(express.static(path.resolve(__dirname, 'frontend', 'dist')));
   app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
+    res.sendFile(path.resolve(__dirname, 'frontend', 'dist', 'index.html'));
   });
 }
 
