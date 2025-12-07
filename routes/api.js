@@ -1,4 +1,6 @@
-const express = require('express');
+// routes/api.js
+import express from 'express';
+
 const router = express.Router();
 
 // ==========
@@ -6,8 +8,8 @@ const router = express.Router();
 // ==========
 
 // GET /api/test
-router.get('/test', function(req, res, next) {
+router.get('/test', (req, res, next) => {
   res.send('respond with a resource');
 });
 
-module.exports = router;
+export default router;

@@ -1,9 +1,15 @@
-const express = require('express');
-const path = require('path');
-const cookieParser = require('cookie-parser');
-const logger = require('morgan');
+// app.js
+import cookieParser from 'cookie-parser';
+import express from 'express';
+import logger from 'morgan';
+import path, { dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { createServer as createViteServer } from 'vite'; // adjust import if needed
 
-const apiRouter = require('./routes/api');
+import apiRouter from './routes/api.js'; // note the .js extension in ESM
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 
@@ -11,8 +17,22 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
 
+if (process.env.NODE_ENV === 'development') {
+  const vite = await createViteServer({
+    server: { middlewareMode: true },
+    appType: 'custom', // disable Vite's own HTML serving
+  });
+  app.use(vite.middlewares);
+} else {
+  // In production, serve static files from the build output
+  app.use(express.static(path.resolve(__dirname, 'dist')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
+  });
+}
+
+app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api', apiRouter);
 
-module.exports = app;
+export default app;
