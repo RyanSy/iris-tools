@@ -17,22 +17,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-// if (process.env.NODE_ENV === 'development') {
-//   const vite = await createViteServer({
-//     server: { middlewareMode: true },
-//     root: path.resolve(__dirname, 'client'), // point to frontend folder
-//     appType: 'custom',
-//   });
-//   app.use(vite.middlewares);
-// } else {
-//   // In production, serve built assets
-//   app.use(express.static(path.resolve(__dirname, 'frontend', 'dist')));
-//   app.get('*', (req, res) => {
-//     res.sendFile(path.resolve(__dirname, 'frontend', 'dist', 'index.html'));
-//   });
-// }
+app.use(express.static(path.resolve(__dirname, 'frontend', 'dist')));
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve(__dirname, 'frontend', 'dist', 'index.html'));
+});
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
