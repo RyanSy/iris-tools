@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { Typography, Box, Alert, CircularProgress } from "@mui/material";
-import { apiFetch } from "../utils/api";
+import { useApi } from "../utils/api";
 import html2canvas from "html2canvas";
 import SearchBar from "../components/SearchBar";
 import ImageCard from "../components/ImageCard";
@@ -11,6 +11,7 @@ function Search({ mode = "cover" }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const { apiFetch } = useApi();
   const frameRefs = useRef([]);
   const inputRef = useRef(null);
 
@@ -40,8 +41,8 @@ function Search({ mode = "cover" }) {
       
       setResult(data);
     } catch(err) {
-      console.log(err);
-      setError(err.message);
+      console.error('Search error:', err);
+      setError(err.message || "Search failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -50,6 +51,7 @@ function Search({ mode = "cover" }) {
   const clearAll = () => {
     setQuery("");
     setResult(null);
+    setError("");
     frameRefs.current = [];
     inputRef.current?.focus();
   };
