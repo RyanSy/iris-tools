@@ -4,12 +4,15 @@ import { useApi } from "../utils/api";
 import html2canvas from "html2canvas";
 import SearchBar from "../components/SearchBar";
 import ImageCard from "../components/ImageCard";
+import ShopifyModal from "../components/ShopifyModal";
 
 function Search({ mode = "cover" }) {
   const [query, setQuery] = useState("");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [shopifyModalOpen, setShopifyModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const { apiFetch } = useApi();
   const frameRefs = useRef([]);
@@ -105,6 +108,41 @@ function Search({ mode = "cover" }) {
     }
   };
 
+  const handleImageClick = async (artist, albumTitle, index = 0) => {
+    const node = frameRefs.current[index];
+    if (!node) return;
+
+    try {
+      // Capture the image as a blob
+      const canvas = await html2canvas(node, { 
+        useCORS: true,
+        allowTaint: false,
+        logging: false
+      });
+      
+      const imageBlob = await new Promise((resolve) => {
+        canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.95);
+      });
+
+      const previewUrl = canvas.toDataURL("image/jpeg");
+      const totalImages = result.images?.length || 1;
+
+      setSelectedImage({
+        title: `${artist} — ${albumTitle}${totalImages > 1 ? ` (${index + 1})` : ''}`,
+        imageUrl: result.proxiedImages?.[index] || result.images?.[index],
+        imageBlob: imageBlob,
+        previewUrl: previewUrl,
+        artist: artist,
+        album: albumTitle,
+      });
+      
+      setShopifyModalOpen(true);
+    } catch (err) {
+      console.error("Failed to capture image:", err);
+      setError("Failed to prepare image for Shopify. Please try again.");
+    }
+  };
+
   // Render images (works for both single and multiple)
   const renderImages = () => {
     if (!result.images || result.images.length === 0) {
@@ -129,6 +167,7 @@ function Search({ mode = "cover" }) {
             imageUrl={result.proxiedImages?.[index] || imageUrl}
             frameRef={(el) => (frameRefs.current[index] = el)}
             onDownload={() => handleDownloadFramed(result.artist, result.album, index)}
+            onImageClick={() => handleImageClick(result.artist, result.album, index)}
             onClear={clearAll}
             circular={isLabelMode}
           />
@@ -155,6 +194,12 @@ function Search({ mode = "cover" }) {
       {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
 
       {result && result.artist && renderImages()}
+
+      <ShopifyModal
+        open={shopifyModalOpen}
+        onClose={() => setShopifyModalOpen(false)}
+        imageData={selectedImage}
+      />
     </Box>
   );
 }

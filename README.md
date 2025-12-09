@@ -140,4 +140,13 @@ Project Link: [https://github.com/RyanSy/iris-tools](https://github.com/RyanSy/i
 
 ---
 
+Artifacts:
+https://claude.ai/public/artifacts/93d1c514-1afa-44cc-9482-163a4337c10c
+https://claude.ai/public/artifacts/15beedc5-481d-435e-8b0b-dfb040e1505b
+https://claude.ai/public/artifacts/dd253783-b4d3-4ca1-bc10-175ab9b629b8
+https://claude.ai/public/artifacts/fe5ddd2b-4f43-4633-b13d-3413c7680c14
+https://claude.ai/public/artifacts/9f7c6ae1-c48e-4748-ab11-548890ee72e1
+https://claude.ai/public/artifacts/d726906f-126f-45f3-8268-20725c93207d
+https://claude.ai/public/artifacts/a3f1467a-9b78-4f47-9159-9a1a9e80cbfc
+
 **Note**: This tool is for personal use only. Please respect copyright and only use images you have the right to reproduce.

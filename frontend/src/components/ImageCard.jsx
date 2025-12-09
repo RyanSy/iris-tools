@@ -1,60 +1,64 @@
 import React from "react";
-import { Paper, Typography, Box, Button } from "@mui/material";
+import { Card, CardContent, CardActions, Button, Typography, Box } from "@mui/material";
 
-function ImageCard({ 
-  title, 
-  subtitle, 
-  imageUrl, 
-  frameRef, 
-  onDownload, 
-  onClear, 
-  circular = false 
-}) {
+function ImageCard({ title, imageUrl, frameRef, onDownload, onImageClick, onClear, circular = false }) {
   return (
-    <Paper elevation={4} sx={{ p: 2, display: "inline-block", textAlign: "center" }}>
-      <Box sx={{ mb: 1 }}>
-        <Typography variant="h6">{title}</Typography>
-        {subtitle && (
-          <Typography variant="subtitle1">{subtitle}</Typography>
-        )}
-        <Typography variant="caption" sx={{ fontStyle: "italic", color: "gray" }}>
-          Click image to download.
+    <Card sx={{ maxWidth: 400, width: "100%" }}>
+      <CardContent>
+        <Typography variant="h6" gutterBottom>
+          {title}
         </Typography>
-      </Box>
-
-      <Box
-        ref={frameRef}
-        sx={{
-          mt: 2,
-          border: circular? "0px" : "20px solid black",
-          display: "inline-block",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
-          cursor: "pointer",
-          ...(circular
-            ? { width: 200, height: 200, borderRadius: "50%", overflow: "hidden" }
-            : {}),
-        }}
-        onClick={onDownload}
-      >
-        <img
-          src={imageUrl}
-          alt="Result"
-          crossOrigin="anonymous"
-          style={{
-            maxWidth: circular ? "100%" : "400px",
-            height: circular ? "100%" : "auto",
-            objectFit: circular ? "cover" : "contain",
-            display: "block",
+        <Box
+          ref={frameRef}
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "#fff",
+            padding: circular ? 2 : 0, // No padding for frames
+            cursor: onImageClick ? "pointer" : "default",
+            transition: "transform 0.2s, box-shadow 0.2s",
+            "&:hover": onImageClick ? {
+              transform: "scale(1.02)",
+              boxShadow: 3,
+            } : {},
           }}
-        />
-      </Box>
-
-      <Box sx={{ mt: 2 }}>
-        <Button variant="outlined" color="secondary" onClick={onClear}>
+          onClick={onImageClick}
+          title={onImageClick ? "Click to add to Shopify" : ""}
+        >
+          <Box
+            sx={{
+              border: circular ? "none" : "20px solid #000", // Black frame for non-circular
+              display: "inline-block",
+              backgroundColor: "#000",
+            }}
+          >
+            <img
+              src={imageUrl}
+              alt={title}
+              style={{
+                display: "block",
+                maxWidth: circular ? "100%" : "360px",
+                width: circular ? "auto" : "360px",
+                height: "auto",
+                borderRadius: circular ? "50%" : "0",
+                aspectRatio: "1/1",
+                objectFit: "cover",
+              }}
+              crossOrigin="anonymous"
+            />
+          </Box>
+        </Box>
+      </CardContent>
+      <CardActions sx={{ justifyContent: "space-between", px: 2 }}>
+        <Button size="small" onClick={onDownload} variant="contained">
+          Download
+        </Button>
+        <Button size="small" onClick={onClear} color="secondary">
           Clear
         </Button>
-      </Box>
-    </Paper>
+      </CardActions>
+    </Card>
   );
 }
 

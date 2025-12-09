@@ -185,6 +185,117 @@ router.get('/labels', async (req, res) => {
   }
 });
 
+// POST /api/shopify/create-product - Create product in Shopify
+router.post('/shopify/create-product', async (req, res) => {
+  const {
+    title,
+    description,
+    price,
+    compareAtPrice,
+    sku,
+    inventory,
+    productType,
+    vendor,
+    tags,
+    published,
+    imageBlob,
+  } = req.body;
+
+  if (!title || !price) {
+    return res.status(400).json({ error: 'Title and price are required' });
+  }
+
+  try {
+    const shopifyDomain = process.env.SHOPIFY_STORE_DOMAIN;
+    const accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
+    const apiVersion = process.env.SHOPIFY_API_VERSION || '2024-01';
+
+    if (!shopifyDomain || !accessToken) {
+      throw new Error('Shopify credentials not configured');
+    }
+
+    // Prepare product payload
+    const productPayload = {
+      product: {
+        title: title,
+        body_html: description || '',
+        vendor: vendor || 'IRIS Tools',
+        product_type: productType || 'Frame',
+        tags: tags || '',
+        status: published ? 'active' : 'draft',
+        variants: [
+          {
+            price: parseFloat(price),
+            compare_at_price: compareAtPrice ? parseFloat(compareAtPrice) : null,
+            sku: sku || '',
+            inventory_management: inventory ? 'shopify' : null,
+            inventory_quantity: inventory ? parseInt(inventory) : 0,
+          },
+        ],
+      },
+    };
+
+    // Create product in Shopify
+    const createProductUrl = `https://${shopifyDomain}/admin/api/${apiVersion}/products.json`;
+    const createResponse = await fetch(createProductUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': accessToken,
+      },
+      body: JSON.stringify(productPayload),
+    });
+
+    if (!createResponse.ok) {
+      const errorData = await createResponse.json();
+      throw new Error(`Shopify API error: ${JSON.stringify(errorData)}`);
+    }
+
+    const productData = await createResponse.json();
+    const productId = productData.product.id;
+
+    // If we have an image blob, upload it
+    if (imageBlob) {
+      // Convert base64 blob to buffer if needed
+      let imageBuffer;
+      if (imageBlob.startsWith('data:image')) {
+        // It's a data URL
+        const base64Data = imageBlob.split(',')[1];
+        imageBuffer = Buffer.from(base64Data, 'base64');
+      } else {
+        imageBuffer = Buffer.from(imageBlob, 'base64');
+      }
+
+      // Upload image to Shopify
+      const imagePayload = {
+        image: {
+          attachment: imageBuffer.toString('base64'),
+          filename: `${title.replace(/[^a-z0-9]/gi, '_')}.jpg`,
+        },
+      };
+
+      const uploadImageUrl = `https://${shopifyDomain}/admin/api/${apiVersion}/products/${productId}/images.json`;
+      await fetch(uploadImageUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Shopify-Access-Token': accessToken,
+        },
+        body: JSON.stringify(imagePayload),
+      });
+    }
+
+    res.json({
+      success: true,
+      productId: productId,
+      productUrl: `https://${shopifyDomain}/admin/products/${productId}`,
+    });
+  } catch (err) {
+    console.error('Shopify create product error:', err);
+    res.status(500).json({ error: err.message || 'Failed to create Shopify product' });
+  }
+});
+
 // Error handling middleware for JWT validation
 router.use((err, req, res, next) => {
   if (err.name === 'UnauthorizedError') {
