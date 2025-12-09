@@ -4,9 +4,16 @@ import { Typography, Tabs, Tab, Box, Button } from "@mui/material";
 import Search from "./pages/Search";
 
 function App() {
-  const { loginWithRedirect, logout, isAuthenticated, user } = useAuth0();
+  const { loginWithRedirect, logout, isAuthenticated, isLoading, error, user } = useAuth0();
   const [tab, setTab] = useState(0);
-  console.log(window.location.origin);
+
+  if (isLoading) {
+    return <Box>Loading...</Box>;
+  }
+
+  if (error) {
+    return <Box>Error: {error.message}</Box>;
+  }
 
   if (!isAuthenticated) {
     return (
