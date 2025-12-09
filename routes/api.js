@@ -64,7 +64,7 @@ router.get('/proxy-image', async (req, res) => {
 // Apply JWT protection to remaining routes
 router.use(checkJwt);
 
-// GET /api/cover
+// GET /api/cover - Now returns multiple images
 router.get('/cover', async (req, res) => {
   const { query } = req.query;
   
@@ -86,10 +86,42 @@ router.get('/cover', async (req, res) => {
       return res.status(404).json({ error: 'No results found' });
     }
 
+    const firstResult = data.results[0];
+    let images = [];
+    
+    // Try to get detailed images from resource_url
+    if (firstResult.resource_url) {
+      try {
+        const releaseResponse = await fetch(firstResult.resource_url);
+        
+        if (releaseResponse.ok) {
+          const release = await releaseResponse.json();
+          const releaseImages = release.images || [];
+          
+          if (releaseImages.length > 0) {
+            images = releaseImages.map(img => img.uri).filter(Boolean);
+          }
+        }
+      } catch (detailErr) {
+        console.warn('Failed to fetch detailed images, falling back to cover_image:', detailErr);
+      }
+    }
+    
+    // Fallback: use cover_image from search results if no detailed images
+    if (images.length === 0 && firstResult.cover_image) {
+      images = [firstResult.cover_image];
+    }
+    
+    // Final check
+    if (images.length === 0) {
+      return res.status(404).json({ error: 'No images found for this release' });
+    }
+
     const result = {
-      artist: data.results[0]?.title?.split(" - ")[0] || "Unknown Artist",
-      album: data.results[0]?.title?.split(" - ")[1] || "Unknown Album",
-      coverArtUrl: data.results[0]?.cover_image || null,
+      artist: firstResult?.title?.split(" - ")[0] || "Unknown Artist",
+      album: firstResult?.title?.split(" - ")[1] || "Unknown Album",
+      images: images,
+      coverArtUrl: images[0], // Keep for backwards compatibility
       success: true
     };
 
