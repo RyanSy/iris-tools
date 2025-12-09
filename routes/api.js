@@ -1,68 +1,28 @@
 // routes/api.js
 import express from 'express';
-import pkg from 'express-openid-connect';
-const { auth, requiresAuth } = pkg;
+import { expressjwt as jwt } from 'express-jwt';
+import jwksRsa from 'jwks-rsa';
 
 const router = express.Router();
 
-// ==========
-// API routes
-// ==========
-
-// GET /api/cover
-router.get('/cover', async (req, res) => {
-  const { query } = req.query;
-  try {
-    const apiUrl = `https://api.discogs.com/database/search?q=${encodeURIComponent(query)}&token=${process.env.DISCOGS_TOKEN}`;
-    const response = await fetch(apiUrl);
-    const data = await response.json();
-
-    const result = {
-      artist: data.results[0]?.title?.split(" - ")[0] || "Unknown Artist",
-      album: data.results[0]?.title?.split(" - ")[1] || "Unknown Album",
-      coverArtUrl: data.results[0]?.cover_image || null,
-      success: true
-    };
-
-    res.json(result);
-  } catch (err) {
-    console.error('Cover API error:', err);
-    res.status(500).json({ error: err.message });
-  }
+// JWT validation middleware
+const checkJwt = jwt({
+  secret: jwksRsa.expressJwtSecret({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 5,
+    jwksUri: `${process.env.AUTH0_ISSUER_BASE_URL}/.well-known/jwks.json`
+  }),
+  audience: process.env.AUTH0_AUDIENCE,
+  issuer: `${process.env.AUTH0_ISSUER_BASE_URL}/`,
+  algorithms: ['RS256']
 });
 
+// ==========
+// PUBLIC ROUTES (no JWT required)
+// ==========
 
-// GET /api/labels
-router.get('/labels', async (req, res) => {
-  const { query } = req.query;
-  try {
-    const apiUrl = `https://api.discogs.com/database/search?q=${encodeURIComponent(query)}&type=release&format=vinyl&token=${process.env.DISCOGS_TOKEN}`;
-    const response = await fetch(apiUrl);
-    const data = await response.json();
-    const resourceUrl = data.results[0].resource_url;
-    const release = await (await fetch(resourceUrl)).json();
-    const releaseImages = release.images;
-    let imgArray = []
-    releaseImages.forEach((img) => {
-      imgArray.push(img.uri);
-    });
-    
-    const result = {
-      artist: data.results[0]?.title?.split(" - ")[0] || "Unknown Artist",
-      album: data.results[0]?.title?.split(" - ")[1] || "Unknown Album",
-      images: imgArray,
-      success: true
-    };
-
-    res.json(result);
-  } catch (err) {
-    console.error('Labels API error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-// GET /api/proxy-image - Proxy images to bypass CORS
+// GET /api/proxy-image - Proxy images to bypass CORS (PUBLIC)
 router.get('/proxy-image', async (req, res) => {
   const { url } = req.query;
   
@@ -77,7 +37,6 @@ router.get('/proxy-image', async (req, res) => {
       throw new Error(`Failed to fetch image: ${response.statusText}`);
     }
 
-    // Use arrayBuffer() instead of buffer()
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     
@@ -86,13 +45,123 @@ router.get('/proxy-image', async (req, res) => {
     // Set appropriate headers
     res.set('Content-Type', contentType);
     res.set('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
-    res.set('Access-Control-Allow-Origin', '*'); // Allow CORS
+    res.set('Access-Control-Allow-Origin', process.env.NODE_ENV === 'production' 
+      ? process.env.AUTH0_BASE_URL 
+      : 'http://localhost:5173'
+    );
     
     res.send(buffer);
   } catch (err) {
     console.error('Proxy image error:', err);
     res.status(500).json({ error: 'Failed to fetch image' });
   }
+});
+
+// ==========
+// PROTECTED ROUTES (JWT required)
+// ==========
+
+// Apply JWT protection to remaining routes
+router.use(checkJwt);
+
+// GET /api/cover
+router.get('/cover', async (req, res) => {
+  const { query } = req.query;
+  
+  if (!query) {
+    return res.status(400).json({ error: 'Query parameter is required' });
+  }
+
+  try {
+    const apiUrl = `https://api.discogs.com/database/search?q=${encodeURIComponent(query)}&token=${process.env.DISCOGS_TOKEN}`;
+    const response = await fetch(apiUrl);
+    
+    if (!response.ok) {
+      throw new Error(`Discogs API error: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+
+    if (!data.results || data.results.length === 0) {
+      return res.status(404).json({ error: 'No results found' });
+    }
+
+    const result = {
+      artist: data.results[0]?.title?.split(" - ")[0] || "Unknown Artist",
+      album: data.results[0]?.title?.split(" - ")[1] || "Unknown Album",
+      coverArtUrl: data.results[0]?.cover_image || null,
+      success: true
+    };
+
+    res.json(result);
+  } catch (err) {
+    console.error('Cover API error:', err);
+    res.status(500).json({ error: err.message || 'Failed to fetch cover art' });
+  }
+});
+
+
+// GET /api/labels
+router.get('/labels', async (req, res) => {
+  const { query } = req.query;
+  
+  if (!query) {
+    return res.status(400).json({ error: 'Query parameter is required' });
+  }
+
+  try {
+    const apiUrl = `https://api.discogs.com/database/search?q=${encodeURIComponent(query)}&type=release&format=vinyl&token=${process.env.DISCOGS_TOKEN}`;
+    const response = await fetch(apiUrl);
+    
+    if (!response.ok) {
+      throw new Error(`Discogs API error: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+
+    if (!data.results || data.results.length === 0) {
+      return res.status(404).json({ error: 'No results found' });
+    }
+
+    const resourceUrl = data.results[0].resource_url;
+    const releaseResponse = await fetch(resourceUrl);
+    
+    if (!releaseResponse.ok) {
+      throw new Error(`Failed to fetch release details: ${releaseResponse.statusText}`);
+    }
+    
+    const release = await releaseResponse.json();
+    const releaseImages = release.images || [];
+    
+    const imgArray = releaseImages.map(img => img.uri).filter(Boolean);
+    
+    if (imgArray.length === 0) {
+      return res.status(404).json({ error: 'No label images found for this release' });
+    }
+    
+    const result = {
+      artist: data.results[0]?.title?.split(" - ")[0] || "Unknown Artist",
+      album: data.results[0]?.title?.split(" - ")[1] || "Unknown Album",
+      images: imgArray,
+      success: true
+    };
+
+    res.json(result);
+  } catch (err) {
+    console.error('Labels API error:', err);
+    res.status(500).json({ error: err.message || 'Failed to fetch label images' });
+  }
+});
+
+// Error handling middleware for JWT validation
+router.use((err, req, res, next) => {
+  if (err.name === 'UnauthorizedError') {
+    return res.status(401).json({ 
+      error: 'Invalid or missing token',
+      message: err.message 
+    });
+  }
+  next(err);
 });
 
 export default router;
