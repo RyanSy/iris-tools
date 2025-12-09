@@ -1,16 +1,33 @@
-export async function apiFetch(endpoint) {
-  try {
-    const res = await fetch(endpoint);
-    const data = await res.json();
-    console.log(data);
+import { useAuth0 } from "@auth0/auth0-react";
 
-    if (!data.success) {
-      // Standardized error from backend
-      throw new Error(data.message || "Unknown error");
+// Custom hook for authenticated API calls
+export const useApi = () => {
+  const { getAccessTokenSilently } = useAuth0();
+
+  const apiFetch = async (endpoint, options = {}) => {
+    try {
+      const token = await getAccessTokenSilently();
+      
+      const response = await fetch(endpoint, {
+        ...options,
+        headers: {
+          ...options.headers,
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API call failed: ${response.status} ${errorText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('API call error:', error);
+      throw error;
     }
+  };
 
-    return data;
-  } catch (err) {
-    throw new Error(err.message || "Network error");
-  }
-}
+  return { apiFetch };
+};
