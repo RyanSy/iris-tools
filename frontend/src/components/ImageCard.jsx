@@ -3,7 +3,7 @@ import { Card, CardContent, CardActions, Button, Typography, Box } from "@mui/ma
 
 function ImageCard({ title, imageUrl, frameRef, onDownload, onImageClick, onClear, circular = false }) {
   return (
-    <Card sx={{ maxWidth: 400, width: "100%" }}>
+    <Card sx={{ maxWidth: 400, width: "100%", padding: 2, boxShadow: 3 }}>
       <CardContent>
         <Typography variant="h6" gutterBottom>
           {title}
@@ -28,9 +28,9 @@ function ImageCard({ title, imageUrl, frameRef, onDownload, onImageClick, onClea
         >
           <Box
             sx={{
-              border: circular ? "none" : "20px solid #000", // Black frame for non-circular
+              border: circular ? "none" : "15px solid #000", // Black frame for non-circular
               display: "inline-block",
-              backgroundColor: "#000",
+              backgroundColor: "#000"
             }}
           >
             <img
@@ -52,7 +52,7 @@ function ImageCard({ title, imageUrl, frameRef, onDownload, onImageClick, onClea
       </CardContent>
       <CardActions sx={{ justifyContent: "space-between", px: 2 }}>
         <Button size="small" onClick={onDownload} variant="contained">
-          Download
+          Download Image
         </Button>
         <Button size="small" onClick={onClear} color="secondary">
           Clear
