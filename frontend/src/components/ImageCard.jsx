@@ -8,6 +8,9 @@ function ImageCard({ title, imageUrl, frameRef, onDownload, onImageClick, onClea
         <Typography variant="h6" gutterBottom>
           {title}
         </Typography>
+        <Typography variant="caption">
+          Click image to add to Shopify.
+        </Typography>
         <Box
           ref={frameRef}
           sx={{
@@ -16,6 +19,7 @@ function ImageCard({ title, imageUrl, frameRef, onDownload, onImageClick, onClea
             alignItems: "center",
             backgroundColor: "#fff",
             padding: circular ? 2 : 0, // No padding for frames
+            marginTop: 2,
             cursor: onImageClick ? "pointer" : "default",
             transition: "transform 0.2s, box-shadow 0.2s",
             "&:hover": onImageClick ? {
@@ -39,11 +43,10 @@ function ImageCard({ title, imageUrl, frameRef, onDownload, onImageClick, onClea
               style={{
                 display: "block",
                 maxWidth: circular ? "100%" : "360px",
-                width: circular ? "auto" : "360px",
-                height: "auto",
+                width: circular ? "100%" : "360px",
                 borderRadius: circular ? "50%" : "0",
                 aspectRatio: "1/1",
-                objectFit: "cover",
+                objectFit: "contain",
               }}
               crossOrigin="anonymous"
             />

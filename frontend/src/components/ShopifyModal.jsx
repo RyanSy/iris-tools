@@ -171,17 +171,44 @@ function ShopifyModal({ open, onClose, imageData }) {
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
           {/* Preview Image */}
           {imageData?.previewUrl && (
-            <Box sx={{ textAlign: "center", mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              mb: 2,
+              p: 2,
+              border: "1px solid #ccc",
+              borderRadius: 2,
+              backgroundColor: "#f9f9f9",
+            }}
+          >
+            <Box
+              sx={{
+                border: "15px solid #000",
+                backgroundColor: "#000",
+                boxSizing: "border-box",
+                maxWidth: "360px",
+                width: "100%",
+              }}
+            >
               <img
                 src={imageData.previewUrl}
                 alt="Product preview"
-                style={{ maxWidth: "300px", maxHeight: "300px" }}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  height: "auto",
+                  aspectRatio: "1/1",
+                  objectFit: "cover",
+                }}
               />
-              <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                Product Image Preview
-              </Typography>
             </Box>
-          )}
+            <Typography variant="caption" display="block" sx={{ mt: 2 }}>
+              Product Image Preview
+            </Typography>
+          </Box>
+        )}
 
           {error && <Alert severity="error">{error}</Alert>}
           {success && <Alert severity="success">Product created successfully!</Alert>}
