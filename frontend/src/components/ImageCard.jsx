@@ -18,7 +18,7 @@ function ImageCard({ title, imageUrl, frameRef, onDownload, onImageClick, onClea
             justifyContent: "center",
             alignItems: "center",
             backgroundColor: "#fff",
-            padding: circular ? 2 : 0, // No padding for frames
+            padding: 0,
             marginTop: 2,
             cursor: onImageClick ? "pointer" : "default",
             transition: "transform 0.2s, box-shadow 0.2s",
@@ -32,9 +32,11 @@ function ImageCard({ title, imageUrl, frameRef, onDownload, onImageClick, onClea
         >
           <Box
             sx={{
-              border: circular ? "none" : "15px solid #000", // Black frame for non-circular
+              border: circular ? "none" : "15px solid #000",
               display: "inline-block",
-              backgroundColor: "#000"
+              backgroundColor: "#000",
+              width: "360px",
+              height: "360px",
             }}
           >
             <img
@@ -42,11 +44,10 @@ function ImageCard({ title, imageUrl, frameRef, onDownload, onImageClick, onClea
               alt={title}
               style={{
                 display: "block",
-                maxWidth: circular ? "100%" : "360px",
-                width: circular ? "100%" : "360px",
+                width: "360px",
+                height: "360px",
                 borderRadius: circular ? "50%" : "0",
-                aspectRatio: "1/1",
-                objectFit: "contain",
+                objectFit: "cover",
               }}
               crossOrigin="anonymous"
             />

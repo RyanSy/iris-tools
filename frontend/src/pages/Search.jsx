@@ -13,6 +13,7 @@ function Search({ mode = "cover" }) {
   const [loading, setLoading] = useState(false);
   const [shopifyModalOpen, setShopifyModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const { apiFetch } = useApi();
   const frameRefs = useRef([]);
@@ -67,6 +68,7 @@ function Search({ mode = "cover" }) {
     setQuery("");
     setResult(null);
     setError("");
+    setSuccessMessage("");
     frameRefs.current = [];
     inputRef.current?.focus();
   };
@@ -129,11 +131,11 @@ function Search({ mode = "cover" }) {
 
       setSelectedImage({
         title: `${artist} — ${albumTitle}${totalImages > 1 ? ` (${index + 1})` : ''}`,
-        imageUrl: result.proxiedImages?.[index] || result.images?.[index],
         imageBlob: imageBlob,
-        previewUrl: previewUrl,
+        previewUrl: previewUrl, // This is the captured canvas image
         artist: artist,
         album: albumTitle,
+        tags: result.tags || [],
       });
       
       setShopifyModalOpen(true);
@@ -141,6 +143,16 @@ function Search({ mode = "cover" }) {
       console.error("Failed to capture image:", err);
       setError("Failed to prepare image for Shopify. Please try again.");
     }
+  };
+
+  const handleShopifySuccess = () => {
+    setShopifyModalOpen(false);
+    setSuccessMessage("Product created successfully in Shopify!");
+    
+    // Auto-dismiss after 3 seconds
+    setTimeout(() => {
+      setSuccessMessage("");
+    }, 3000);
   };
 
   // Render images (works for both single and multiple)
@@ -192,13 +204,24 @@ function Search({ mode = "cover" }) {
 
       {loading && <CircularProgress sx={{ mt: 2 }} />}
       {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+      {successMessage && (
+        <Alert 
+          severity="success" 
+          sx={{ mt: 2, maxWidth: 600, mx: "auto" }}
+          onClose={() => setSuccessMessage("")}
+        >
+          {successMessage}
+        </Alert>
+      )}
 
       {result && result.artist && renderImages()}
 
       <ShopifyModal
         open={shopifyModalOpen}
         onClose={() => setShopifyModalOpen(false)}
+        onSuccess={handleShopifySuccess}
         imageData={selectedImage}
+        mode={mode}
       />
     </Box>
   );

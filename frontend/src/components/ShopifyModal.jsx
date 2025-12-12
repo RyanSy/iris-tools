@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -68,24 +68,62 @@ const MISC_TAGS = [
   "Non-Music Image",
 ];
 
-function ShopifyModal({ open, onClose, imageData }) {
+function ShopifyModal({ open, onClose, imageData, mode = "cover", onSuccess }) {
   const { apiFetch } = useApi();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+
+  const isCoasterMode = mode === "label";
 
   // Form state
   const [formData, setFormData] = useState({
-    title: imageData?.title || "",
+    title: "",
     description: "",
     price: "",
     compareAtPrice: "",
     sku: "",
     inventory: "",
-    productType: "Frame",
+    productType: isCoasterMode ? "Coaster" : "Frame",
     selectedTags: [],
     published: true,
   });
+
+  // Update form when imageData changes
+  useEffect(() => {
+    if (imageData && open) {
+      const artist = imageData.artist || "Unknown Artist";
+      const album = imageData.album || "Unknown Album";
+      
+      // Generate appropriate title based on mode
+      const productTitle = isCoasterMode 
+        ? `${album} Groovy Coaster - ${artist}`
+        : imageData.title || `${artist} — ${album}`;
+      
+      // Auto-select tags based on mode and imageData
+      const autoTags = [];
+      if (isCoasterMode) {
+        autoTags.push("LP Coasters");
+      } else {
+        autoTags.push("Framed Album Covers");
+      }
+      
+      // Add genre tags if available
+      if (imageData.tags && Array.isArray(imageData.tags)) {
+        imageData.tags.forEach(tag => {
+          if (GENRE_TAGS.includes(tag)) {
+            autoTags.push(tag);
+          }
+        });
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        title: productTitle,
+        productType: isCoasterMode ? "Coaster" : "Frame",
+        selectedTags: autoTags,
+      }));
+    }
+  }, [imageData, open, isCoasterMode]);
 
   const handleChange = (field) => (e) => {
     const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
@@ -104,7 +142,6 @@ function ShopifyModal({ open, onClose, imageData }) {
   const handleSubmit = async () => {
     setError("");
     setLoading(true);
-    setSuccess(false);
 
     try {
       // Validate required fields
@@ -112,12 +149,22 @@ function ShopifyModal({ open, onClose, imageData }) {
         throw new Error("Title and Price are required");
       }
 
+      // Convert Blob to base64 string
+      let imageBase64 = null;
+      if (imageData.imageBlob) {
+        imageBase64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(imageData.imageBlob);
+        });
+      }
+
       // Prepare payload with tags as comma-separated string
       const payload = {
         ...formData,
         tags: formData.selectedTags.join(", "),
-        imageUrl: imageData.imageUrl,
-        imageBlob: imageData.imageBlob, // Canvas-captured image data
+        imageBlob: imageBase64, // Now a base64 string
       };
 
       const response = await apiFetch("/api/shopify/create-product", {
@@ -125,13 +172,11 @@ function ShopifyModal({ open, onClose, imageData }) {
         body: JSON.stringify(payload),
       });
 
-      setSuccess(true);
-      
-      // Close modal after 2 seconds
-      setTimeout(() => {
-        onClose();
-        resetForm();
-      }, 2000);
+      // Call success callback and close modal
+      if (onSuccess) {
+        onSuccess();
+      }
+      resetForm();
     } catch (err) {
       console.error("Shopify create error:", err);
       setError(err.message || "Failed to create product. Please try again.");
@@ -148,13 +193,11 @@ function ShopifyModal({ open, onClose, imageData }) {
       compareAtPrice: "",
       sku: "",
       inventory: "",
-      productType: "Frame",
-      vendor: "IRIS Tools",
+      productType: isCoasterMode ? "Coaster" : "Frame",
       selectedTags: [],
       published: true,
     });
     setError("");
-    setSuccess(false);
   };
 
   const handleClose = () => {
@@ -171,47 +214,48 @@ function ShopifyModal({ open, onClose, imageData }) {
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
           {/* Preview Image */}
           {imageData?.previewUrl && (
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              mb: 2,
-              p: 2,
-              border: "1px solid #ccc",
-              borderRadius: 2,
-              backgroundColor: "#f9f9f9",
-            }}
-          >
             <Box
               sx={{
-                border: "15px solid #000",
-                backgroundColor: "#000",
-                boxSizing: "border-box",
-                maxWidth: "360px",
-                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                mb: 2,
+                p: 2,
+                border: "1px solid #ccc",
+                borderRadius: 2,
+                backgroundColor: "#f9f9f9",
               }}
             >
-              <img
-                src={imageData.previewUrl}
-                alt="Product preview"
-                style={{
-                  display: "block",
+              <Box
+                sx={{
+                  border: isCoasterMode ? "none" : "15px solid #000",
+                  backgroundColor: isCoasterMode ? "transparent" : "#000",
+                  boxSizing: "border-box",
+                  maxWidth: "360px",
                   width: "100%",
-                  height: "auto",
-                  aspectRatio: "1/1",
-                  objectFit: "cover",
+                  padding: isCoasterMode ? 0 : 0,
                 }}
-              />
+              >
+                <img
+                  src={imageData.previewUrl}
+                  alt="Product preview"
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    height: "auto",
+                    aspectRatio: "1/1",
+                    objectFit: "cover",
+                    borderRadius: isCoasterMode ? "50%" : "0",
+                  }}
+                />
+              </Box>
+              <Typography variant="caption" display="block" sx={{ mt: 2 }}>
+                Product Image Preview ({isCoasterMode ? "Coaster" : "Frame"})
+              </Typography>
             </Box>
-            <Typography variant="caption" display="block" sx={{ mt: 2 }}>
-              Product Image Preview
-            </Typography>
-          </Box>
-        )}
+          )}
 
           {error && <Alert severity="error">{error}</Alert>}
-          {success && <Alert severity="success">Product created successfully!</Alert>}
 
           {/* Title */}
           <TextField
@@ -369,7 +413,7 @@ function ShopifyModal({ open, onClose, imageData }) {
         <Button
           onClick={handleSubmit}
           variant="contained"
-          disabled={loading || success}
+          disabled={loading}
           startIcon={loading && <CircularProgress size={20} />}
         >
           {loading ? "Creating..." : "Create Product"}
