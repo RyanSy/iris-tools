@@ -158,19 +158,30 @@ function ShopifyModal({ open, onClose, imageData, mode = "cover", onSuccess }) {
           reader.onerror = reject;
           reader.readAsDataURL(imageData.imageBlob);
         });
+      } else if (imageData.previewUrl) {
+        // Fallback: use previewUrl if imageBlob is not available
+        imageBase64 = imageData.previewUrl;
       }
+
+      if (!imageBase64) {
+        throw new Error("No image data available");
+      }
+
+      console.log('Sending image to Shopify, size:', imageBase64.length, 'bytes');
 
       // Prepare payload with tags as comma-separated string
       const payload = {
         ...formData,
         tags: formData.selectedTags.join(", "),
-        imageBlob: imageBase64, // Now a base64 string
+        imageBlob: imageBase64, // Base64 data URL
       };
 
       const response = await apiFetch("/api/shopify/create-product", {
         method: "POST",
         body: JSON.stringify(payload),
       });
+
+      console.log('Shopify product created:', response);
 
       // Call success callback and close modal
       if (onSuccess) {
@@ -312,7 +323,7 @@ function ShopifyModal({ open, onClose, imageData, mode = "cover", onSuccess }) {
               label="Inventory"
               fullWidth
               type="number"
-              value={formData.inventory}
+              value="1"
               onChange={handleChange("inventory")}
               disabled={loading}
             />
