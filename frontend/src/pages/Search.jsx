@@ -149,7 +149,17 @@ function Search({ mode = "cover" }) {
     setShopifyModalOpen(false);
     setSuccessMessage("Product created successfully in Shopify!");
     
-    // Auto-dismiss after 3 seconds
+    // Clear results and focus search input
+    setResult(null);
+    setQuery("");
+    frameRefs.current = [];
+    
+    // Focus the search input
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
+    
+    // Auto-dismiss success message after 3 seconds
     setTimeout(() => {
       setSuccessMessage("");
     }, 3000);
