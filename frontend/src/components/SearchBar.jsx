@@ -2,11 +2,11 @@ import React from "react";
 import { TextField, Button, IconButton, InputAdornment } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
-function SearchBar({ query, setQuery, onSearch, onClear, inputRef }) {
+function SearchBar({ query, setQuery, onSearch, inputRef }) {
   return (
     <form
       onSubmit={onSearch}
-      style={{ display: "flex", justifyContent: "center", gap: "8px", marginBottom: "16px" }}
+      style={{ display: "flex", justifyContent: "center", gap: "4px", marginBottom: "16px" }}
     >
       <TextField
         inputRef={inputRef}

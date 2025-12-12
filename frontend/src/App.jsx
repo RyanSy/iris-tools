@@ -58,8 +58,8 @@ function App() {
         <Tab label="Coasters" />
       </Tabs>
 
-      {tab === 0 && <Search mode="cover" />}
-      {tab === 1 && <Search mode="label" />}
+      {tab === 0 && <Search mode="cover" circular={false} />}
+      {tab === 1 && <Search mode="label" circular={true}  />}
     </Box>
   );
 }
