@@ -16,7 +16,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         redirect_uri: window.location.origin,
         audience: audience, // This requests an access token for your API
       }}
-      logoutRedirectUri={import.meta.env.VITE_AUTH0_LOGOUT_URL}
       useRefreshTokens={true}
       cacheLocation="localstorage"
     >
