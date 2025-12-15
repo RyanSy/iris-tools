@@ -48,7 +48,15 @@ function App() {
   return (
     <Box sx={{ width: "100%" }}>
       <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
-        <Button onClick={() => logout({ returnTo: import.meta.env.VITE_AUTH0_LOGOUT_URL })}>
+        <Button 
+          onClick={() =>
+            logout({
+              logoutParams: {
+                returnTo: import.meta.env.VITE_AUTH0_LOGOUT_URL
+              }
+            })
+          }
+        >
           Log Out ({user?.email})
         </Button>
       </Box>
