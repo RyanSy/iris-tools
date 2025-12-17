@@ -2,7 +2,8 @@
 
 A web application for creating custom album art frames and vinyl label coasters. Search for any album and download high-quality images.
 
-
+## TODO:
+Update this README - this application now integrates Auth0 for user authentication and uses the Shopify API to add a store's product inventory.
 ## Features
 
 ### Album Frames
